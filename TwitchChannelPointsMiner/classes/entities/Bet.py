@@ -12,6 +12,7 @@ class Strategy(Enum):
     MOST_VOTED = auto()
     HIGH_ODDS = auto()
     PERCENTAGE = auto()
+    DOUBLE_SMART = auto()
     SMART_MONEY = auto()
     SMART = auto()
     NUMBER_1 = auto()
@@ -25,6 +26,12 @@ class Strategy(Enum):
 
     def __str__(self):
         return self.name
+
+
+class Playoff(Enum):
+    MOST_VOTED = auto()
+    PERCENTAGE = auto()
+    MAX = auto()
 
 
 class Condition(Enum):
@@ -81,6 +88,9 @@ class BetSettings(object):
         "strategy",
         "percentage",
         "percentage_gap",
+        "th_probs",
+        "th_users",
+        "playoff",
         "max_points",
         "minimum_points",
         "stealth_mode",
@@ -94,6 +104,9 @@ class BetSettings(object):
         strategy: Strategy = None,
         percentage: int = None,
         percentage_gap: int = None,
+        th_probs: int = None,
+        th_users: int = None,
+        playoff : Playoff = None,
         max_points: int = None,
         minimum_points: int = None,
         stealth_mode: bool = None,
@@ -104,6 +117,9 @@ class BetSettings(object):
         self.strategy = strategy
         self.percentage = percentage
         self.percentage_gap = percentage_gap
+        self.th_probs = th_probs
+        self.th_probs = th_users
+        self.playoff = playoff
         self.max_points = max_points
         self.minimum_points = minimum_points
         self.stealth_mode = stealth_mode
@@ -117,6 +133,9 @@ class BetSettings(object):
         self.percentage_gap = (
             self.percentage_gap if self.percentage_gap is not None else 20
         )
+        self.th_probs = self.th_probs if self.th_probs is not None else 80        
+        self.th_users = self.th_users if self.th_users is not None else 20  
+        self.playoff = self.playoff if self.playoff is not None else Playoff.MOST_VOTED
         self.max_points = self.max_points if self.max_points is not None else 50000
         self.minimum_points = (
             self.minimum_points if self.minimum_points is not None else 0
@@ -130,7 +149,7 @@ class BetSettings(object):
         )
 
     def __repr__(self):
-        return f"BetSettings(strategy={self.strategy}, percentage={self.percentage}, percentage_gap={self.percentage_gap}, max_points={self.max_points}, minimum_points={self.minimum_points}, stealth_mode={self.stealth_mode})"
+        return f"BetSettings(strategy={self.strategy}, percentage={self.percentage}, percentage_gap={self.percentage_gap}, th_probs={self.th_users}, th_users={self.th_users}, playoff={self.playoff}, max_points={self.max_points}, minimum_points={self.minimum_points}, stealth_mode={self.stealth_mode})"
 
 
 class Bet(object):
@@ -233,6 +252,21 @@ class Bet(object):
                 if key not in self.outcomes[index]:
                     self.outcomes[index][key] = 0
 
+    def __compute_smart_double(self, diff_odds, diff_users) -> int:
+        if diff_odds < self.settings.percentage_limit and diff_users < self.settings.percentage_gap:
+            return self.__return_choice(OutcomeKeys.ODDS)
+        
+        if self.settings.playoff == Playoff.MOST_VOTED:
+            return self.__return_choice(OutcomeKeys.TOTAL_USERS)
+        elif self.settings.playoff == Playoff.PERCENTAGE:
+            return self.__return_choice(OutcomeKeys.ODDS_PERCENTAGE)
+        else: #self.settings.playoff == Playoff.MAX
+            if max(diff_odds, diff_users) == diff_users: 
+                return self.__return_choice(OutcomeKeys.TOTAL_USERS)
+            else:
+                return self.__return_choice(OutcomeKeys.ODDS_PERCENTAGE)
+
+
     '''def __return_choice(self, key) -> str:
         return "A" if self.outcomes[0][key] > self.outcomes[1][key] else "B"'''
 
@@ -295,6 +329,16 @@ class Bet(object):
             self.decision["choice"] = self.__return_choice(OutcomeKeys.ODDS)
         elif self.settings.strategy == Strategy.PERCENTAGE:
             self.decision["choice"] = self.__return_choice(OutcomeKeys.ODDS_PERCENTAGE)
+        elif self.settings.strategy == Strategy.SMART_DOUBLE:
+            diff_odds = abs(
+                self.outcomes[0][OutcomeKeys.ODDS_PERCENTAGE]
+                - self.outcomes[1][OutcomeKeys.ODDS_PERCENTAGE]
+            )
+            diff_users = abs(
+                self.outcomes[0][OutcomeKeys.PERCENTAGE_USERS]
+                - self.outcomes[1][OutcomeKeys.PERCENTAGE_USERS]
+            )
+            self.decision["choice"] = self.__compute_smart_double(diff_odds, diff_users)            
         elif self.settings.strategy == Strategy.SMART_MONEY:
             self.decision["choice"] = self.__return_choice(OutcomeKeys.TOP_POINTS)
         elif self.settings.strategy == Strategy.NUMBER_1:
