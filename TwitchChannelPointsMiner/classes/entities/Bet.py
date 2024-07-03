@@ -256,7 +256,7 @@ class Bet(object):
                     self.outcomes[index][key] = 0
 
     def __compute_smart_double(self, diff_odds, diff_users) -> int:
-        if diff_odds < self.settings.percentage_limit and diff_users < self.settings.percentage_gap:
+        if diff_odds < self.settings.th_probs and diff_users < self.settings.th_probs:
             return self.__return_choice(OutcomeKeys.ODDS)
         
         if self.settings.playoff == Playoff.MOST_VOTED:
