@@ -33,6 +33,9 @@ class Playoff(Enum):
     PERCENTAGE = auto()
     MAX = auto()
 
+    def __str__(self):
+        return self.name
+
 
 class Condition(Enum):
     GT = auto()
@@ -118,7 +121,7 @@ class BetSettings(object):
         self.percentage = percentage
         self.percentage_gap = percentage_gap
         self.th_probs = th_probs
-        self.th_probs = th_users
+        self.th_users = th_users
         self.playoff = playoff
         self.max_points = max_points
         self.minimum_points = minimum_points
