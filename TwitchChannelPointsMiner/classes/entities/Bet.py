@@ -332,7 +332,7 @@ class Bet(object):
             self.decision["choice"] = self.__return_choice(OutcomeKeys.ODDS)
         elif self.settings.strategy == Strategy.PERCENTAGE:
             self.decision["choice"] = self.__return_choice(OutcomeKeys.ODDS_PERCENTAGE)
-        elif self.settings.strategy == Strategy.SMART_DOUBLE:
+        elif self.settings.strategy == Strategy.DOUBLE_SMART:
             diff_odds = abs(
                 self.outcomes[0][OutcomeKeys.ODDS_PERCENTAGE]
                 - self.outcomes[1][OutcomeKeys.ODDS_PERCENTAGE]
