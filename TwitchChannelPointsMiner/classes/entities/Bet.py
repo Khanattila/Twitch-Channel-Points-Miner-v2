@@ -356,7 +356,7 @@ class Bet(object):
             self.decision["id"] = self.outcomes[index]["id"]
             self.decision["amount"] = min(
                 int(balance * (self.settings.percentage / 100)),
-                self.settings.max_points,
+                int(self.total_points * (self.settings.max_points / 100)),
             )
             if (
                 self.settings.stealth_mode is True
